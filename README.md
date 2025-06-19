@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Discens
 
-## Getting Started
+**Discens** es una plataforma modular para la gestión integral de instituciones educativas.  
+Comienza como una solución para el manejo de personas (alumnos, docentes, familiares, directivos) y está pensada para escalar hacia funcionalidades administrativas y comunicacionales.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Tecnologías principales
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Next.js 15.3** (App Router, Server Actions, Middleware)
+- **Supabase** (Base de datos, Auth, RLS)
+- **ShadCN UI** (Componentes accesibles sobre Tailwind CSS)
+- **TypeScript** para tipado estático y escalabilidad
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧩 Funcionalidades iniciales
 
-## Learn More
+- ABM de personas con multi-tenant (`school_id`)
+- Autenticación con Supabase
+- Middleware para control de sesión
+- Estructura lista para escalar a:
 
-To learn more about Next.js, take a look at the following resources:
+  - Facturación y caja diaria
+  - Comunicación interna (chat, notificaciones)
+  - Reportes por escuela
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🗂️ Estructura del proyecto
 
-## Deploy on Vercel
+discens/
+├── src/
+│ ├── app/ # Páginas y rutas Next.js App Router
+│ ├── actions/ # Server Actions
+│ ├── lib/
+│ │ └── supabase/ # Clientes Supabase (client, server, middleware)
+│ └── components/ # Componentes UI
+├── public/ # Archivos estáticos
+├── middleware.ts # Middleware de autenticación Supabase
+├── .env.local # Claves Supabase (NO se sube al repo)
+└── docs/ # Documentación interna del proyecto
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 Licencia
+Este proyecto se encuentra bajo una licencia privada durante la etapa de desarrollo.
+
+## ✍️ Autor
+Pablo Macia · @pablormacia
