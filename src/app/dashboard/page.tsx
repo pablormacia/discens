@@ -1,12 +1,24 @@
+// app/dashboard/page.tsx
 import { redirect } from "next/navigation"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { Database } from "@/types/supabase" // ajustá según tu tipo generado
+import { Database } from "@/types/supabase"
 
 export default async function DashboardRouter() {
-  const supabase = createServerClient<Database>({
-    cookies,
-  })
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookies().get(name)?.value
+        },
+        // los setters NO deben hacer nada acá
+        set() {},
+        remove() {},
+      },
+    }
+  )
 
   const {
     data: { user },
@@ -23,6 +35,8 @@ export default async function DashboardRouter() {
   const role = profile?.roles?.name
 
   switch (role) {
+    case "superadmin":
+      return redirect("/dashboard/superadmin")
     case "admin":
       return redirect("/dashboard/admin")
     case "director":
@@ -33,3 +47,9 @@ export default async function DashboardRouter() {
       return redirect("/dashboard/generic")
   }
 }
+
+
+
+
+
+

@@ -1,3 +1,4 @@
+// app/dashboard/director/page.tsx
 export default function DirectorDashboard() {
   return (
     <div className="p-6">
