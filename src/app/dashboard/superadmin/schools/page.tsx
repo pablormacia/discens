@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,7 @@ import {
   TableCell,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, EyeOff,  Eye } from "lucide-react";
+import { Trash2, EyeOff, Eye } from "lucide-react";
 import { EditSchoolDialog } from "@/components/dashboard/EditSchoolDialog";
 import { CreateSchoolDialog } from "@/components/dashboard/CreateSchoolDialog";
 import { School } from "@/types/school";
@@ -24,7 +24,7 @@ export default function SchoolsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const fetchSchools = async () => {
+  const fetchSchools = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("schools")
@@ -34,11 +34,11 @@ export default function SchoolsPage() {
 
     if (!error) setSchools(data || []);
     setLoading(false);
-  };
+  }, [sortField, sortAsc, page, supabase]);
 
   useEffect(() => {
     fetchSchools();
-  }, [sortField, sortAsc, page]);
+  }, [fetchSchools]);
 
   const toggleSort = (field: "name" | "created_at") => {
     if (sortField === field) {
@@ -118,7 +118,10 @@ export default function SchoolsPage() {
                   {new Date(school.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  <EditSchoolDialog school={school} onUpdated={fetchSchools} />
+                  <EditSchoolDialog
+                    school={school}
+                    onUpdated={fetchSchools}
+                  />
                   <Button
                     variant="ghost"
                     size="icon"

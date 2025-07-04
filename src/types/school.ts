@@ -9,3 +9,10 @@ export interface School {
   created_at: string
   is_active: bool
 }
+
+export interface Level {
+  id: string
+  name: string
+  cue: string | null
+  school_id: string
+}

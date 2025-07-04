@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/utils/supabase/client'
-import type { School } from '@/types/school'
+import type { School} from '@/types/school'
 import { dictionary } from '@/utils/functions/dictionary'
 
 export function SchoolForm({
@@ -43,6 +43,7 @@ export function SchoolForm({
     onSuccess()
   }
 
+
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
       {['name', 'address', 'city', 'province', 'phone', 'cue'].map((field) => (
@@ -56,7 +57,8 @@ export function SchoolForm({
           />
         </div>
       ))}
-
+      <div>
+</div>
       <Button onClick={handleSubmit} disabled={loading}>
         {loading ? 'Guardando...' : 'Guardar'}
       </Button>

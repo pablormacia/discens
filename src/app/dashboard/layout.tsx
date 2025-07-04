@@ -15,17 +15,18 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies() // Obtener una vez
-  const supabase = createServerClient<Database>(
+  const cookieStore = cookies();
+
+ const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) {
-         return cookieStore.get(name)?.value ?? null
-        },
-        set() {},/* no implementado en Server Components */
-        remove() {},/* no implementado en Server Components */
+        get: (name: string) => cookieStore.get(name)?.value ?? null,
+        set: () => {},     // no implementamos porque en layout no se usa
+        remove: () => {},  // idem
+        getAll: () => cookieStore.getAll().map(c => c.value),
+        setAll: () => {},  // idem
       },
     }
   );
@@ -34,21 +35,20 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const userId = user?.id;
-  if (!userId) throw new Error("No hay usuario autenticado");
+  if (!user?.id) throw new Error("No hay usuario autenticado");
 
-const { data: profile, error: profileError } = await supabase
-  .from("profiles")
-  .select("roles(name), persons(first_name, last_name), schools(name)")
-  .eq("id", userId)
-  .single()
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("roles(name), persons(first_name, last_name), schools(name)")
+    .eq("id", user.id)
+    .single();
 
-if (profileError || !profile?.roles?.name) {
-  console.error("No se pudo determinar el rol del usuario", profileError)
-  throw new Error("Rol no definido para el usuario")
-}
+  if (profileError || !profile?.roles?.name) {
+    console.error("No se pudo determinar el rol del usuario", profileError);
+    throw new Error("Rol no definido para el usuario");
+  }
 
-const role = profile.roles.name
+  const role = profile.roles.name;
   const userName = `${profile?.persons?.first_name ?? ""} ${
     profile?.persons?.last_name ?? ""
   }`;
@@ -56,11 +56,8 @@ const role = profile.roles.name
 
   const superadminLinks = [
     { label: "Inicio", href: "/dashboard/superadmin", icon: "Home" },
-    {
-      label: "Colegios",
-      href: "/dashboard/superadmin/schools",
-      icon: "School",
-    },
+    { label: "Colegios", href: "/dashboard/superadmin/schools", icon: "School" },
+    { label: "Niveles", href: "/dashboard/superadmin/levels", icon: "Layers" },
     { label: "Usuarios", href: "/dashboard/superadmin/users", icon: "Users" },
   ];
 
@@ -75,9 +72,7 @@ const role = profile.roles.name
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
-      <Sidebar
-        links={role === "superadmin" ? superadminLinks : directorLinks}
-      />
+      <Sidebar links={role === "superadmin" ? superadminLinks : directorLinks} />
       <div className="flex-1 flex flex-col">
         <Topbar userName={userName} schoolName={schoolName} />
         <main className="p-4">{children}</main>

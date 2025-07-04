@@ -6,6 +6,7 @@ import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SchoolForm } from './SchoolForm'
 
+
 export function CreateSchoolDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog>
