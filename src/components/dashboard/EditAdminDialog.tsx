@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { createClient } from "@/utils/supabase/client";
 import {
   Dialog,
@@ -20,11 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface School {
-  id: string;
-  name: string;
-}
+import { School } from "@/types/school";
 
 interface EditAdminDialogProps {
   profile: {
@@ -36,35 +31,35 @@ interface EditAdminDialogProps {
       birth_date?: string | null;
       address?: string | null;
       phone?: string | null;
-      id: string; // person id
+      person_id: string; // person id
     };
     profile_school: { school: School; id?: string }[];
   };
   onClose: () => void;
 }
 
-interface FormData {
-  firstName: string;
-  lastName: string;
-  documentNumber: string;
-  birthDate: string;
-  address: string;
-  phone: string;
-  schoolId: string;
-}
-
 export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
   const supabase = createClient();
+
   const [schools, setSchools] = useState<School[]>([]);
   const [loadingSchools, setLoadingSchools] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FormData>();
+  // Estados para los campos
+  const [firstName, setFirstName] = useState(profile.person.first_name);
+  const [lastName, setLastName] = useState(profile.person.last_name);
+  const [documentNumber, setDocumentNumber] = useState(
+    profile.person.document_number
+  );
+  const [birthDate, setBirthDate] = useState(profile.person.birth_date ?? "");
+  const [address, setAddress] = useState(profile.person.address ?? "");
+  const [phone, setPhone] = useState(profile.person.phone ?? "");
+  const [schoolId, setSchoolId] = useState(
+    profile.profile_school.length > 0 ? profile.profile_school[0].school.id : ""
+  );
+
+  // Errores simples
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     async function fetchSchools() {
@@ -80,58 +75,61 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
     fetchSchools();
   }, [supabase]);
 
-  useEffect(() => {
-    // Cargar datos iniciales al formulario
-    reset({
-      firstName: profile.person.first_name,
-      lastName: profile.person.last_name,
-      documentNumber: profile.person.document_number,
-      birthDate: profile.person.birth_date || "",
-      address: profile.person.address || "",
-      phone: profile.person.phone || "",
-      schoolId: profile.profile_school.length > 0 ? profile.profile_school[0].school.id : "",
-    });
-  }, [profile, reset]);
+  // Validación simple
+  function validate() {
+    const newErrors: { [key: string]: string } = {};
+    if (!firstName.trim()) newErrors.firstName = "Nombre es obligatorio";
+    if (!lastName.trim()) newErrors.lastName = "Apellido es obligatorio";
+    if (!schoolId) newErrors.schoolId = "Debes elegir un colegio";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    console.log("Profile", profile);
     setSubmitting(true);
+
     try {
-      // 1. Actualizar person
       const { error: personError } = await supabase
         .from("persons")
         .update({
-          first_name: data.firstName,
-          last_name: data.lastName,
-          document_number: data.documentNumber,
-          birth_date: data.birthDate,
-          address: data.address,
-          phone: data.phone,
+          first_name: firstName,
+          last_name: lastName,
+          document_number: documentNumber || "",
+          birth_date: birthDate === "" ? null : birthDate,
+          address: address || "",
+          phone: phone || "",
         })
-        .eq("id", profile.person.id);
+        .eq("id", profile.person_id);
 
       if (personError) throw personError;
 
-      // 2. Actualizar profile_school (puede cambiar colegio)
-      const currentProfileSchool = profile.profile_school[0];
-      if (currentProfileSchool?.school.id !== data.schoolId) {
-        // Si cambia colegio: borrar actual y agregar nuevo
-        if (currentProfileSchool?.id) {
-          await supabase
-            .from("profile_school")
-            .delete()
-            .eq("id", currentProfileSchool.id);
-        }
+      const currentSchoolId = profile.profile_school[0]?.school.id;
+
+      // Si el colegio cambió (o no hay ninguno asignado aún)
+      if (currentSchoolId !== schoolId) {
+        // Eliminar cualquier asociación previa (por si hay más de una)
+        await supabase
+          .from("profile_school")
+          .delete()
+          .eq("profile_id", profile.id);
+
+        // Insertar la nueva asociación
         const { error: psError } = await supabase
           .from("profile_school")
           .insert({
             profile_id: profile.id,
-            school_id: data.schoolId,
+            school_id: schoolId,
           });
+
         if (psError) throw psError;
       }
 
       onClose();
     } catch (error) {
+      console.error("Error capturado:", error);
       alert("Error actualizando el usuario: " + JSON.stringify(error));
     } finally {
       setSubmitting(false);
@@ -145,16 +143,17 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
           <DialogTitle>Editar administrador</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label htmlFor="firstName">Nombre</Label>
             <Input
               id="firstName"
-              {...register("firstName", { required: "Nombre es obligatorio" })}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               disabled={submitting}
             />
             {errors.firstName && (
-              <p className="text-red-600 text-sm">{errors.firstName.message}</p>
+              <p className="text-red-600 text-sm">{errors.firstName}</p>
             )}
           </div>
 
@@ -162,11 +161,12 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
             <Label htmlFor="lastName">Apellido</Label>
             <Input
               id="lastName"
-              {...register("lastName", { required: "Apellido es obligatorio" })}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
               disabled={submitting}
             />
             {errors.lastName && (
-              <p className="text-red-600 text-sm">{errors.lastName.message}</p>
+              <p className="text-red-600 text-sm">{errors.lastName}</p>
             )}
           </div>
 
@@ -174,11 +174,12 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
             <Label htmlFor="documentNumber">DNI</Label>
             <Input
               id="documentNumber"
-              {...register("documentNumber", { required: "DNI es obligatorio" })}
+              value={documentNumber}
+              onChange={(e) => setDocumentNumber(e.target.value)}
               disabled={submitting}
             />
             {errors.documentNumber && (
-              <p className="text-red-600 text-sm">{errors.documentNumber.message}</p>
+              <p className="text-red-600 text-sm">{errors.documentNumber}</p>
             )}
           </div>
 
@@ -187,19 +188,30 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
             <Input
               id="birthDate"
               type="date"
-              {...register("birthDate")}
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
               disabled={submitting}
             />
           </div>
 
           <div>
             <Label htmlFor="phone">Teléfono</Label>
-            <Input id="phone" {...register("phone")} disabled={submitting} />
+            <Input
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={submitting}
+            />
           </div>
 
           <div>
             <Label htmlFor="address">Dirección</Label>
-            <Input id="address" {...register("address")} disabled={submitting} />
+            <Input
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              disabled={submitting}
+            />
           </div>
 
           <div>
@@ -208,7 +220,8 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
               <p>Cargando colegios...</p>
             ) : (
               <Select
-                {...register("schoolId", { required: "Debes elegir un colegio" })}
+                value={schoolId}
+                onValueChange={setSchoolId}
                 disabled={submitting}
               >
                 <SelectTrigger>
@@ -224,7 +237,7 @@ export function EditAdminDialog({ profile, onClose }: EditAdminDialogProps) {
               </Select>
             )}
             {errors.schoolId && (
-              <p className="text-red-600 text-sm">{errors.schoolId.message}</p>
+              <p className="text-red-600 text-sm">{errors.schoolId}</p>
             )}
           </div>
 

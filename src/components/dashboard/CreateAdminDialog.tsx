@@ -1,250 +1,155 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { createClient } from "@/utils/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { createAdmin } from '@/actions/createAdmin';
+import { School } from '@/types/school';
+import { useRoleId } from '@/hooks/useRoleId';
+import { createClient } from '@/utils/supabase/client';
 
-interface FormData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  documentNumber: string;
-  birthDate: string;
-  address: string;
-  phone: string;
-  schoolId: string;
-}
-
-interface School {
-  id: string;
-  name: string;
-  is_active: boolean;
-}
-
-interface CreateAdminDialogProps {
+interface Props {
   onClose: () => void;
 }
 
-export function CreateAdminDialog({ onClose }: CreateAdminDialogProps) {
-  const supabase = createClient();
+export function CreateAdminDialog({ onClose }: Props) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [schoolId, setSchoolId] = useState('');
+
   const [schools, setSchools] = useState<School[]>([]);
-  const [loadingSchools, setLoadingSchools] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [serverError, setServerError] = useState("");
+  const [error, setError] = useState('');
+  const { roleId } = useRoleId('admin');
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<FormData>();
+useEffect(() => {
+  const supabase = createClient();
 
-  useEffect(() => {
-    async function fetchSchools() {
-      setLoadingSchools(true);
-      const { data, error } = await supabase
-        .from("schools")
-        .select("id, name, is_active")
-        .order("name");
+  const fetchSchools = async () => {
+    const { data, error } = await supabase
+      .from('schools')
+      .select('id, name')
+      .eq('is_active', true)
+      .order('name');
 
-      if (!error && data) setSchools(data);
-      setLoadingSchools(false);
+    if (!error && data) {
+      setSchools(data);
     }
-    fetchSchools();
-  }, [supabase]);
+  };
 
-  const onSubmit = async (data: FormData) => {
+  fetchSchools();
+}, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setSubmitting(true);
-    setServerError("");
+    setError('');
 
-    try {
-      const res = await fetch("/api/create-admin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+    const result = await createAdmin({
+      email,
+      password,
+      first_name: firstName,
+      last_name: lastName,
+      document_number: documentNumber,
+      birth_date: birthDate || null,
+      address,
+      phone,
+      school_id: schoolId,
+      role_id: roleId!,
+    });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Error desconocido");
-
-      reset();
+    if ('error' in result) {
+      setError(result.error);
+    } else {
       onClose();
-    } catch (error: unknown) {
-      setServerError(error.message || "Error inesperado");
-    } finally {
-      setSubmitting(false);
     }
+
+    setSubmitting(false);
   };
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        className="
-          max-w-full
-          sm:max-w-4xl
-          max-h-[90vh]
-          overflow-auto
-          flex flex-col sm:flex-row gap-6 p-6
-        "
-      >
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Crear nuevo administrador</DialogTitle>
+          <DialogTitle>Nuevo administrador</DialogTitle>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex-1 overflow-y-auto max-h-[80vh] space-y-4"
-        >
-          <div>
-            <Label htmlFor="email" className="mb-2">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              {...register("email", { required: "Email es obligatorio" })}
-              disabled={submitting}
-            />
-            {errors.email && <p className="text-red-600 text-sm">{errors.email.message}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Email</Label>
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Contraseña</Label>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Nombre</Label>
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+            </div>
+            <div>
+              <Label>Apellido</Label>
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="password" className="mb-2">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              {...register("password", { required: "Contraseña es obligatoria" })}
-              disabled={submitting}
-            />
-            {errors.password && <p className="text-red-600 text-sm">{errors.password.message}</p>}
+            <Label>DNI</Label>
+            <Input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Fecha de nacimiento</Label>
+              <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+            </div>
+            <div>
+              <Label>Teléfono</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="firstName" className="mb-2">Nombre</Label>
-            <Input
-              id="firstName"
-              {...register("firstName", { required: "Nombre es obligatorio" })}
-              disabled={submitting}
-            />
-            {errors.firstName && <p className="text-red-600 text-sm">{errors.firstName.message}</p>}
+            <Label>Dirección</Label>
+            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
           </div>
 
           <div>
-            <Label htmlFor="lastName" className="mb-2">Apellido</Label>
-            <Input
-              id="lastName"
-              {...register("lastName", { required: "Apellido es obligatorio" })}
-              disabled={submitting}
-            />
-            {errors.lastName && <p className="text-red-600 text-sm">{errors.lastName.message}</p>}
+            <Label>Colegio</Label>
+            <Select value={schoolId} onValueChange={setSchoolId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un colegio" />
+              </SelectTrigger>
+              <SelectContent>
+                {schools.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <Label htmlFor="documentNumber" className="mb-2">DNI</Label>
-            <Input
-              id="documentNumber"
-              {...register("documentNumber", { required: "DNI es obligatorio" })}
-              disabled={submitting}
-            />
-            {errors.documentNumber && (
-              <p className="text-red-600 text-sm">{errors.documentNumber.message}</p>
-            )}
-          </div>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
 
-          <div>
-            <Label htmlFor="birthDate" className="mb-2">Fecha de nacimiento</Label>
-            <Input
-              id="birthDate"
-              type="date"
-              {...register("birthDate")}
-              disabled={submitting}
-            />
-            {errors.birthDate && (
-              <p className="text-red-600 text-sm">{errors.birthDate.message}</p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="phone" className="mb-2">Teléfono</Label>
-            <Input id="phone" {...register("phone")} disabled={submitting} />
-          </div>
-
-          <div>
-            <Label htmlFor="address" className="mb-2">Dirección</Label>
-            <Input id="address" {...register("address")} disabled={submitting} />
-          </div>
-
-          <div>
-            <Label htmlFor="schoolId" className="mb-2">Colegio asignado</Label>
-            {loadingSchools ? (
-              <p>Cargando colegios...</p>
-            ) : (
-              <Controller
-                name="schoolId"
-                control={control}
-                rules={{ required: "Debes elegir un colegio" }}
-                render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={submitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un colegio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {schools.map((school) => (
-                        <SelectItem
-                          key={school.id}
-                          value={school.id}
-                          disabled={!school.is_active}
-                        >
-                          {school.name} {!school.is_active && " (inactivo)"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            )}
-            {errors.schoolId && (
-              <p className="text-red-600 text-sm">{errors.schoolId.message}</p>
-            )}
-          </div>
-
-          {serverError && (
-            <p className="text-red-600 text-sm font-semibold">{serverError}</p>
-          )}
-
-          <DialogFooter className="pt-4">
+          <DialogFooter>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Creando..." : "Crear"}
+              {submitting ? 'Creando...' : 'Crear'}
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                reset();
-                onClose();
-              }}
-              disabled={submitting}
-            >
+            <Button variant="ghost" onClick={onClose} disabled={submitting}>
               Cancelar
             </Button>
           </DialogFooter>

@@ -15,18 +15,17 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies()
 
  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: (name: string) => cookieStore.get(name)?.value ?? null,
-        set: () => {},     // no implementamos porque en layout no se usa
-        remove: () => {},  // idem
-        getAll: () => cookieStore.getAll().map(c => c.value),
-        setAll: () => {},  // idem
+        get: (name) => cookieStore.get(name)?.value ?? null,
+        set: () => {},
+        remove: () => {},
+        // Omití getAll para evitar el error, a menos que lo necesites
       },
     }
   );

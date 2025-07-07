@@ -16,3 +16,21 @@ export interface Level {
   cue: string | null
   school_id: string
 }
+
+export interface Person {
+  first_name: string
+  last_name: string
+  document_number: string
+  birt_date: string
+  address: string
+  phone: string
+  type: string
+  created_at:string
+  updated_at:string
+}
+
+export interface Profile {
+  id: string
+  person: Person
+  profile_school: { school: School }[]
+}

@@ -13,23 +13,8 @@ import {
 import { Trash2, Edit } from "lucide-react";
 import { CreateAdminDialog } from "@/components/dashboard/CreateAdminDialog";
 import { EditAdminDialog } from "@/components/dashboard/EditAdminDialog";
-
-interface Person {
-  first_name: string;
-  last_name: string;
-  document_number: string;
-}
-
-interface School {
-  id: string;
-  name: string;
-}
-
-interface Profile {
-  id: string;
-  person: Person;
-  profile_school: { school: School }[];
-}
+import { Profile } from "@/types/school";
+import { useRoleId } from "@/hooks/useRoleId";
 
 export default function UsersPage() {
   const supabase = createClient();
@@ -42,28 +27,40 @@ export default function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editProfile, setEditProfile] = useState<Profile | null>(null);
 
+
+  const { roleId } = useRoleId("admin");
+
+
   const fetchAdmins = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select(`
+      .select(
+        `
         id,
+        person_id,
         person:persons (
           first_name,
           last_name,
-          document_number
+          document_number,
+          birth_date,
+          address,
+          phone,
+          created_at,
+          updated_at
         ),
         profile_school (
           school:schools (id, name)
         ),
         role:roles (name)
-      `)
-      .eq("role.name", "admin")
+      `
+      )
+      .eq("role_id", roleId)
       .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (!error && data) setAdmins(data);
     setLoading(false);
-  }, [page, supabase]);
+  }, [page, supabase, roleId]);
 
   useEffect(() => {
     fetchAdmins();
