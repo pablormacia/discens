@@ -23,7 +23,6 @@ export function SchoolForm({
     city: school?.city ?? '',
     province: school?.province ?? '',
     phone: school?.phone ?? '',
-    cue: school?.cue ?? '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -46,7 +45,7 @@ export function SchoolForm({
 
   return (
     <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-      {['name', 'address', 'city', 'province', 'phone', 'cue'].map((field) => (
+      {['name', 'address', 'city', 'province', 'phone'].map((field) => (
         <div key={field}>
           <Label className='mb-2' htmlFor={field}>{dictionary[field] ?? field}</Label>
           <Input
