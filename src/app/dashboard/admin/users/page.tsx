@@ -57,6 +57,11 @@ export default function ManageUsersPage() {
             id,
             name
           )
+        ),
+        profile_school_levels (
+          role_id,
+          school_level_id,
+        school_id
         )
       `
       )
@@ -102,6 +107,7 @@ export default function ManageUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+  console.log(editProfile);
 
   return (
     <div className="p-6">
@@ -126,9 +132,9 @@ export default function ManageUsersPage() {
           </TableHeader>
           <TableBody>
             {users.map((user) => {
-              const roles = user.profile_roles?.map((pr) => pr.role.name).join(", ") || "-";
-              const schoolName =
-                user.profile_school?.[0]?.school?.name || "-";
+              const roles =
+                user.profile_roles?.map((pr) => pr.role.name).join(", ") || "-";
+              const schoolName = user.profile_school?.[0]?.school?.name || "-";
 
               return (
                 <TableRow key={user.id}>
@@ -141,7 +147,31 @@ export default function ManageUsersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setEditProfile(user)}
+                      onClick={() => {
+                        const roles = user.profile_roles.map((pr) => pr.role);
+                        const role_levels = user.profile_school_levels.map(
+                          (lvl) => ({
+                            role_id: lvl.role_id,
+                            school_level_id: lvl.school_level_id,
+                          })
+                        );
+                        const school_id =
+                          user.profile_school?.[0]?.school?.id ?? "";
+
+                        setEditProfile({
+                          id: user.id,
+                          email: user.person.email,
+                          first_name: user.person.first_name,
+                          last_name: user.person.last_name,
+                          document_number: user.person.document_number,
+                          birth_date: user.person.birth_date,
+                          address: user.person.address,
+                          phone: user.person.phone,
+                          school_id,
+                          roles,
+                          role_levels,
+                        });
+                      }}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -184,7 +214,7 @@ export default function ManageUsersPage() {
 
       {editProfile && (
         <EditUserDialog
-          profile={editProfile}
+          user={editProfile}
           onClose={() => {
             setEditProfile(null);
             fetchUsers();

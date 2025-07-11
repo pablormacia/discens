@@ -29,13 +29,36 @@ export interface Person {
   updated_at:string
 }
 
-export type Profile = {
+export interface Profile {
   id: string;
-  person_id: string;
-  person: Person;
-  profile_school: { school: School }[];
-  profile_roles: ProfileRole[];
-};
+  person: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    document_number?: string;
+    birth_date?: string | null;
+    address?: string;
+    phone?: string;
+  };
+  profile_school: {
+    school: {
+      id: string;
+      name: string;
+    };
+  }[];
+  profile_roles: {
+    role: {
+      id: string;
+      name: string;
+    };
+  }[];
+  profile_school_levels: {
+    role_id: string;
+    school_id: string;
+    school_level_id: string;
+  }[];
+}
 export type Role = {
   id: string;
   name: string;
