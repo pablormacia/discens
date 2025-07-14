@@ -1,9 +1,9 @@
-// app/dashboard/generic/page.tsx
-export default function GenericDashboard() {
+import React from 'react'
+
+const page = () => {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Panel General</h1>
-      <p>Bienvenido/a al sistema Discens.</p>
-    </div>
+    <div>Oops, algo salió mal con tu usuario.Contactate a soporte@discens.com.ar</div>
   )
 }
+
+export default page

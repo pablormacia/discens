@@ -1,68 +1,62 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Mail, Lock } from 'lucide-react'
+import { useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Mail, Lock } from "lucide-react";
+import { getDashboardRouteForRole } from "@/utils/getDashboardRouteForRole";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleLogin = async () => {
-    const supabase = createClient()
+    const supabase = createClient();
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { data: authData, error: authError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (authError || !authData.user) {
-      alert(authError?.message || 'Error desconocido')
-      return
+      alert(authError?.message || "Error desconocido");
+      return;
     }
 
-    const userId = authData.user.id
+    const userId = authData.user.id;
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('roles(name)')
-      .eq('id', userId)
-      .single()
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("profile_roles(role:roles(name))")
+      .eq("id", userId)
+      .single();
 
-    if (profileError || !profile?.roles?.name) {
-      alert('No se pudo determinar el rol del usuario')
-      return
+    if (error || !data) {
+      alert("No se pudo determinar el rol del usuario");
+      return;
     }
 
-    const role = profile.roles.name
+    const roles = data.profile_roles.map((r: unknown) => r.role.name);
 
-    switch (role) {
-      case 'superadmin':
-        router.push('/dashboard/superadmin')
-        break
-      case 'admin':
-        router.push('/dashboard/admin')
-        break
-      case 'director':
-        router.push('/dashboard/director')
-        break
-      case 'familiar':
-        router.push('/dashboard/familiar')
-        break
-      default:
-        router.push('/dashboard/generic')
+    if (roles.length === 1) {
+      localStorage.setItem("activeRole", roles[0]);
+      router.push(getDashboardRouteForRole(roles[0]));
+    } else {
+      router.push("/select-role");
     }
-  }
+  };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md space-y-6 bg-white p-8 rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-800">Ingresar a Discens</h1>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Ingresar a Discens
+          </h1>
           <p className="text-gray-500">Gestión escolar</p>
         </div>
 
@@ -74,7 +68,7 @@ export default function LoginPage() {
               type="email"
               placeholder="Correo electrónico"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
@@ -85,15 +79,18 @@ export default function LoginPage() {
               type="password"
               placeholder="Contraseña"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleLogin}>
+          <Button
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            onClick={handleLogin}
+          >
             Ingresar
           </Button>
         </div>
       </div>
     </main>
-  )
+  );
 }
