@@ -36,6 +36,7 @@
 
 ### Maestranza
 - Ver rutinas de limpieza asignadas
+- Marcar tareas como realizadas
 
 ### Estudiante
 - Ver sus datos, calendario, horarios

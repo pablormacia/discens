@@ -5,7 +5,6 @@ import { createServerClient } from "@supabase/ssr";
 import { Database } from "@/types/supabase";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
-import { getActiveRoleFromCookies } from "@/lib/getActiveRolFromCookies";
 
 export const metadata = {
   title: "Panel | Discens",
@@ -94,6 +93,7 @@ export default async function DashboardLayout({
     { label: "Inicio", href: "/dashboard/admin", icon: "Home" },
     { label: "Colegio", href: "/dashboard/admin/school", icon: "School" },
     { label: "Niveles", href: "/dashboard/admin/levels", icon: "Layers" },
+    { label: "Cursos", href: "/dashboard/admin/courses", icon: "Puzzle" },
     { label: "Usuarios", href: "/dashboard/admin/users", icon: "Users" },
   ];
 
