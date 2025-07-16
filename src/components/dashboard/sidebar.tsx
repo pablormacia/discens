@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Users, School,Layers,Puzzle } from "lucide-react";
+import { Home, Users, School,Layers,Puzzle,CalendarCog } from "lucide-react";
 
 type SidebarLink = {
   label: string;
@@ -14,7 +14,8 @@ const iconMap = {
   Users,
   School,
   Layers,
-  Puzzle
+  Puzzle,
+  CalendarCog
 }
 
 export function Sidebar({ links }: { links: SidebarLink[] }) {

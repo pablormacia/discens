@@ -5,6 +5,7 @@ import { createServerClient } from "@supabase/ssr";
 import { Database } from "@/types/supabase";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
+import DashboardProviders from "./DashBoardProviders";
 
 export const metadata = {
   title: "Panel | Discens",
@@ -53,7 +54,6 @@ export default async function DashboardLayout({
     .select("roles(name)")
     .eq("profile_id", user.id);
 
-
   const availableRoles =
     rolesData?.map((r) => r.roles.name).filter(Boolean) || [];
 
@@ -70,6 +70,14 @@ export default async function DashboardLayout({
     activeRoleObj?.role?.name || profile.profile_roles[0]?.role?.name;
 
   if (!finalRole) throw new Error("El usuario no tiene roles asignados");
+
+  /* if (!activeRoleCookie) {
+    cookies().set("activeRole", finalRole, {
+      path: "/",
+      httpOnly: false, // puede ser true si solo lo usás del lado del server
+      sameSite: "lax",
+    });
+  } */
 
   const userName = `${profile.persons?.first_name ?? ""} ${
     profile.persons?.last_name ?? ""
@@ -94,6 +102,11 @@ export default async function DashboardLayout({
     { label: "Colegio", href: "/dashboard/admin/school", icon: "School" },
     { label: "Niveles", href: "/dashboard/admin/levels", icon: "Layers" },
     { label: "Cursos", href: "/dashboard/admin/courses", icon: "Puzzle" },
+    {
+      label: "Ciclo lectivo",
+      href: "/dashboard/admin/academic_years",
+      icon: "CalendarCog",
+    },
     { label: "Usuarios", href: "/dashboard/admin/users", icon: "Users" },
   ];
 
@@ -109,7 +122,7 @@ export default async function DashboardLayout({
 
   let links;
 
-switch (finalRole.toLowerCase()){
+  switch (finalRole.toLowerCase()) {
     case "superadmin":
       links = superadminLinks;
       break;
@@ -139,17 +152,19 @@ switch (finalRole.toLowerCase()){
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
-      <Sidebar links={links} />
-      <div className="flex-1 flex flex-col">
-        <Topbar
-          userName={userName}
-          schoolName={schoolName}
-          role={finalRole}
-          availableRoles={availableRoles}
-        />
-        <main className="p-4">{children}</main>
+    <DashboardProviders>
+      <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
+        <Sidebar links={links} />
+        <div className="flex-1 flex flex-col">
+          <Topbar
+            userName={userName}
+            schoolName={schoolName}
+            role={finalRole}
+            availableRoles={availableRoles}
+          />
+          <main className="p-4">{children}</main>
+        </div>
       </div>
-    </div>
+    </DashboardProviders>
   );
 }
