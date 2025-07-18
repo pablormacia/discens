@@ -59,6 +59,7 @@ export default async function DashboardLayout({
 
   // Obtener rol activo desde cookie
   const activeRoleCookie = cookieStore.get("activeRole")?.value;
+  console.log("Cookie de rol en layout:", activeRoleCookie)
 
   // Buscar rol activo en los roles del perfil
   const activeRoleObj = profile.profile_roles.find(

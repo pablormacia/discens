@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Lock } from "lucide-react";
 import { getDashboardRouteForRole } from "@/utils/getDashboardRouteForRole";
+import { setUserCookieServer } from "@/actions/setUserCookieServer";
+import { startTransition } from "react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -42,9 +44,26 @@ export default function LoginPage() {
 
     const roles = data.profile_roles.map((r: unknown) => r.role.name);
 
-    if (roles.length === 1) {
+    /* if (roles.length === 1) {
       localStorage.setItem("activeRole", roles[0]);
+      setClientCookie("activeRole", roles[0]);
       router.push(getDashboardRouteForRole(roles[0]));
+    } else {
+      router.push("/select-role");
+    } */
+    if (roles.length === 1) {
+      const role = roles[0];
+      localStorage.setItem("activeRole", roles[0]);
+      // Llama a la server action antes de redirigir
+      startTransition(() => {
+        setUserCookieServer({
+          profileId: data.id, // o data.profile.id
+          schoolId: data.school_id, // según tu modelo
+          role,
+        });
+      });
+
+      router.push(getDashboardRouteForRole(role));
     } else {
       router.push("/select-role");
     }

@@ -13,6 +13,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { useSelector, UseSelector } from "react-redux";
 
 type Period = {
   start?: Date;
@@ -34,6 +35,9 @@ export default function CourseYearsPage() {
 
   const [academicYears,setAcademicYears] = useState()
   const [activeYear, setActiveYear] = useState<Date>()
+
+  const schoolId_store = useSelector(state=>state.userContext.schoolId)
+  console.log("School Id desde store:", schoolId_store)
 
   useEffect(() => {
 
